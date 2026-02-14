@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Student Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+--primary:#1E3A8A;
+--bg:#F4F7FD;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+
+body{display:flex;background:var(--bg);}
+
+.sidebar{
+width:220px;
+height:100vh;
+background:var(--primary);
+color:white;
+padding:30px 20px;
+position:fixed;
+display:flex;
+flex-direction:column;
+}
+
+.sidebar h2{margin-bottom:40px;font-size:18px;}
+
+.sidebar ul{list-style:none;flex:1;}
+
+.sidebar ul li{
+padding:12px;
+margin-bottom:10px;
+border-radius:8px;
+cursor:pointer;
+transition:0.3s;
+}
+
+.sidebar ul li:hover,
+.sidebar ul li.active{
+background:rgba(255,255,255,0.2);
+}
+
+.main{
+margin-left:220px;
+padding:40px;
+width:100%;
+}
+
+.section{
+background:white;
+padding:30px;
+border-radius:14px;
+box-shadow:0 8px 20px rgba(0,0,0,0.06);
+max-width:900px;
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+<h2>🎓 Student Portal</h2>
+<ul>
+<li onclick="show('home')" class="active">Home</li>
+<li onclick="show('ask')">Ask Campus</li>
+<li onclick="show('timetable')">Timetable</li>
+<li onclick="show('reminder')">Reminder</li>
+<li onclick="logout()">Logout</li>
+</ul>
+</div>
+
+<div class="main">
+
+<div id="home" class="section">
+<h3>Welcome Student</h3>
+<p>Your academic dashboard overview.</p>
+</div>
+
+<div id="ask" class="section" style="display:none;">
+<h3>Ask Campus AI</h3>
+<p>Ask academic or campus related queries.</p>
+</div>
+
+<div id="timetable" class="section" style="display:none;">
+<h3>Your Timetable</h3>
+<p>Class schedule will appear here.</p>
+</div>
+
+<div id="reminder" class="section" style="display:none;">
+<h3>Reminders</h3>
+<p>Set academic reminders here.</p>
+</div>
+
+</div>
+
+<script>
+function show(id){
+document.querySelectorAll('.section').forEach(s=>s.style.display='none');
+document.getElementById(id).style.display='block';
+document.querySelectorAll('.sidebar ul li').forEach(li=>li.classList.remove('active'));
+event.target.classList.add('active');
+}
+function logout(){
+window.location.href="../auth.html?role=student";
+}
+</script>
+
+</body>
+</html>

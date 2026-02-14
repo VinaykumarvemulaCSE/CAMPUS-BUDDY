@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Campus Buddy - Secure Access</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --primary:#1E3A8A;
+    --accent:#DC2626;
+    --light:#2563EB;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(-45deg,#1E3A8A,#2563EB,#1E40AF,#DC2626);
+    background-size:400% 400%;
+    animation:gradientMove 10s ease infinite;
+}
+
+@keyframes gradientMove{
+0%{background-position:0% 50%}
+50%{background-position:100% 50%}
+100%{background-position:0% 50%}
+}
+
+.auth-container{perspective:1200px;}
+.auth-card{
+width:900px;
+height:550px;
+position:relative;
+transform-style:preserve-3d;
+transition:0.8s cubic-bezier(.4,.2,.2,1);
+}
+.auth-card.flip{transform:rotateY(180deg);}
+
+.auth-face{
+position:absolute;
+width:100%;
+height:100%;
+backface-visibility:hidden;
+border-radius:20px;
+display:flex;
+overflow:hidden;
+box-shadow:0 30px 60px rgba(0,0,0,0.3);
+}
+
+.front{background:rgba(255,255,255,0.15);backdrop-filter:blur(20px);}
+.back{background:rgba(255,255,255,0.18);backdrop-filter:blur(20px);transform:rotateY(180deg);}
+
+.left{
+flex:1;
+padding:70px;
+color:white;
+display:flex;
+flex-direction:column;
+justify-content:center;
+}
+
+.left h2 span{color:#FFD700;}
+
+.right{
+flex:1;
+background:white;
+padding:70px 60px;
+}
+
+.right h2{margin-bottom:20px;color:var(--primary);}
+
+input{
+width:100%;
+padding:14px;
+margin-bottom:15px;
+border-radius:8px;
+border:1px solid #ddd;
+text-transform:uppercase;
+}
+
+button{
+width:100%;
+padding:14px;
+border:none;
+border-radius:8px;
+background:linear-gradient(90deg,var(--primary),var(--light));
+color:white;
+font-weight:600;
+cursor:pointer;
+transition:0.3s;
+}
+
+button:hover{
+background:linear-gradient(90deg,var(--accent),var(--primary));
+transform:translateY(-2px);
+}
+
+.toggle{
+margin-top:15px;
+text-align:center;
+cursor:pointer;
+font-size:14px;
+color:var(--primary);
+}
+
+.role-label{
+margin-bottom:15px;
+font-weight:600;
+color:var(--primary);
+}
+</style>
+</head>
+<body>
+
+<div class="auth-container">
+<div class="auth-card" id="card">
+
+<!-- LOGIN -->
+<div class="auth-face front">
+<div class="left">
+<h2>Welcome to <span>Campus Buddy</span></h2>
+<p id="roleText"></p>
+</div>
+
+<div class="right">
+<h2>Login</h2>
+
+<div class="role-label" id="loginRoleLabel"></div>
+
+<input type="text" id="loginId" maxlength="10" placeholder="College ID">
+<input type="password" id="loginPass" placeholder="Password">
+
+<button onclick="login()">Login</button>
+
+<div class="toggle" onclick="flipCard()">Don't have an account? Sign Up</div>
+</div>
+</div>
+
+<!-- SIGNUP -->
+<div class="auth-face back">
+<div class="left">
+<h2>Create <span>Account</span></h2>
+<p>Join and unlock your academic dashboard.</p>
+</div>
+
+<div class="right">
+<h2>Sign Up</h2>
+
+<div class="role-label" id="signupRoleLabel"></div>
+
+<input type="text" placeholder="Full Name">
+<input type="text" id="signupId" maxlength="10" placeholder="College ID">
+<input type="password" id="signupPass" placeholder="Password">
+<input type="password" id="confirmPass" placeholder="Confirm Password">
+
+<button onclick="signup()">Create Account</button>
+
+<div class="toggle" onclick="flipCard()">Already have an account? Login</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<script>
+
+const card=document.getElementById("card");
+function flipCard(){card.classList.toggle("flip");}
+
+/* =========================
+   ROLE FROM role.html
+========================= */
+const params = new URLSearchParams(window.location.search);
+const role = params.get("role");
+
+if(!role){
+    alert("No role selected!");
+    window.location.href="role.html";
+}
+
+document.getElementById("loginRoleLabel").innerText = role.toUpperCase()+" LOGIN";
+document.getElementById("signupRoleLabel").innerText = role.toUpperCase()+" SIGNUP";
+document.getElementById("roleText").innerText = "Secure "+role.toUpperCase()+" access";
+
+/* =========================
+   AUTO UPPERCASE + LIMIT 10
+========================= */
+function enforceUppercaseAndLimit(inputId){
+    const input = document.getElementById(inputId);
+    input.addEventListener("input", function(){
+        this.value = this.value.toUpperCase().slice(0,10);
+    });
+}
+
+enforceUppercaseAndLimit("loginId");
+enforceUppercaseAndLimit("signupId");
+
+/* =========================
+   VALIDATE ID LENGTH
+========================= */
+function validateID(id){
+    return id.length === 10;
+}
+
+/* =========================
+   LOGIN
+========================= */
+function login(){
+    const id = document.getElementById("loginId").value;
+
+    if(!validateID(id)){
+        alert("College ID must be exactly 10 characters.");
+        return;
+    }
+
+    if(role === "student"){
+        window.location.href = "student/dashboard.html";
+    } else if(role === "faculty"){
+        window.location.href = "faculty/dashboard.html";
+    }
+}
+
+/* =========================
+   SIGNUP
+========================= */
+function signup(){
+    const id = document.getElementById("signupId").value;
+    const pass=document.getElementById("signupPass").value;
+    const confirm=document.getElementById("confirmPass").value;
+
+    if(!validateID(id)){
+        alert("College ID must be exactly 10 characters.");
+        return;
+    }
+
+    if(pass!==confirm){
+        alert("Passwords do not match!");
+        return;
+    }
+
+    alert("Account created successfully!");
+    flipCard();
+}
+
+</script>
+
+</body>
+</html>

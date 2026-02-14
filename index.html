@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Campus Buddy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --primary-blue: #1E3A8A;
+    --accent-red: #DC2626;
+    --light-blue: #2563EB;
+    --background: #F4F7FB;
+    --text-dark: #1F2937;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background: var(--background);
+    color: var(--text-dark);
+    overflow-x: hidden;
+}
+
+/* NAVBAR */
+.navbar {
+    position: fixed;
+    width: 100%;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(6px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 8%;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    z-index: 1000;
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--primary-blue);
+    letter-spacing: 1px;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+}
+
+.nav-links a {
+    text-decoration: none;
+    margin-left: 25px;
+    font-weight: 500;
+    color: var(--text-dark);
+    transition: 0.3s;
+}
+
+.nav-links a:hover {
+    color: var(--accent-red);
+}
+
+.nav-btn {
+    margin-left: 30px;
+    padding: 10px 20px;
+    background: var(--primary-blue);
+    color: white !important;
+    border-radius: 30px;
+    transition: 0.3s;
+}
+
+.nav-btn:hover {
+    background: var(--accent-red);
+}
+
+/* HERO */
+.hero {
+    height: 100vh;
+    background: linear-gradient(rgba(10,20,60,0.7), rgba(10,20,60,0.7)),
+                url('hero_image.png') center/cover no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    padding: 0 20px;
+    animation: fadeIn 2s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.hero-content {
+    max-width: 850px;
+    animation: slideUp 1.2s ease forwards;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.hero h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.highlight {
+    color: var(--accent-red);
+    animation: glow 2s infinite alternate;
+}
+
+@keyframes glow {
+    from { text-shadow: 0 0 5px var(--accent-red); }
+    to { text-shadow: 0 0 20px var(--accent-red); }
+}
+
+.hero p {
+    font-size: 18px;
+    margin-bottom: 30px;
+    font-weight: 300;
+    line-height: 1.6;
+}
+
+.hero button {
+    padding: 14px 32px;
+    font-size: 16px;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    background: var(--primary-blue);
+    color: white;
+    transition: 0.3s;
+}
+
+.hero button:hover {
+    background: var(--accent-red);
+    transform: scale(1.05);
+}
+
+/* SECTION DIVIDER */
+.section-divider {
+    height: 4px;
+    background: linear-gradient(to right, var(--primary-blue), var(--accent-red));
+}
+
+/* FEATURES */
+.features {
+    padding: 100px 8%;
+    text-align: center;
+    background: white;
+}
+
+.features h2 {
+    font-size: 32px;
+    margin-bottom: 60px;
+    color: var(--primary-blue);
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 35px;
+}
+
+.feature-card {
+    padding: 30px;
+    border-radius: 12px;
+    background: var(--background);
+    transition: 0.3s;
+}
+
+.feature-card:hover {
+    box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+    transform: translateY(-8px);
+}
+
+.feature-card h3 {
+    margin-bottom: 15px;
+    color: var(--light-blue);
+}
+
+/* CTA */
+.cta {
+    background: var(--primary-blue);
+    color: white;
+    text-align: center;
+    padding: 80px 8%;
+}
+
+.cta h2 {
+    font-size: 28px;
+    margin-bottom: 25px;
+}
+
+.cta button {
+    padding: 14px 30px;
+    border: none;
+    background: var(--accent-red);
+    color: white;
+    font-size: 15px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.cta button:hover {
+    background: white;
+    color: var(--primary-blue);
+}
+
+/* FOOTER */
+footer {
+    background: white;
+    text-align: center;
+    padding: 20px;
+    font-size: 14px;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* RESPONSIVE */
+@media(max-width: 768px) {
+    .hero h1 {
+        font-size: 34px;
+    }
+
+    .hero p {
+        font-size: 16px;
+    }
+
+    .nav-links a {
+        display: none;
+    }
+}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+    <div class="logo">CAMPUS BUDDY</div>
+    <div class="nav-links">
+        <a href="#">Home</a>
+        <a href="#features">Features</a>
+        <a href="#">About</a>
+        <a href="role.html" class="nav-btn">Get Started</a>
+    </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-content">
+        <h1>Your <span class="highlight">AI-Powered Campus Companion</span></h1>
+        <p>
+            A centralized digital platform for students and faculty to access 
+            official documents, personalized timetables, reminders, and 
+            intelligent academic assistance.
+        </p>
+        <button onclick="location.href='role.html'">Access Portal</button>
+    </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+    <h2>Platform Capabilities</h2>
+
+    <div class="feature-grid">
+        <div class="feature-card">
+            <h3>📄 Official Document Access</h3>
+            <p>Retrieve verified academic documents uploaded by faculty and administration.</p>
+        </div>
+
+        <div class="feature-card">
+            <h3>🗓 Section-Based Timetables</h3>
+            <p>Automatically view schedules mapped to your registered section.</p>
+        </div>
+
+        <div class="feature-card">
+            <h3>🤖 AI Academic Assistant</h3>
+            <p>Accurate responses powered by institutional knowledge retrieval.</p>
+        </div>
+
+        <div class="feature-card">
+            <h3>🔐 Secure Role-Based Access</h3>
+            <p>Dedicated dashboards for students and faculty with protected authentication.</p>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+    <h2>Transforming Campus Experience Digitally</h2>
+    <button onclick="location.href='role.html'">Login to Continue</button>
+</section>
+
+<footer>
+    © 2026 Campus Buddy | Academic Digital Initiative
+</footer>
+
+</body>
+</html>
