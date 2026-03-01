@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Campus Buddy - Secure Access</title>
+<title>Campus Buddy - Access</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
@@ -120,6 +120,7 @@ color:var(--primary);
 }
 </style>
 </head>
+
 <body>
 
 <div class="auth-container">
@@ -140,7 +141,7 @@ color:var(--primary);
 <input type="text" id="loginId" maxlength="10" placeholder="College ID">
 <input type="password" id="loginPass" placeholder="Password">
 
-<button onclick="login()">Login</button>
+<button type="button" onclick="login()">Login</button>
 
 <div class="toggle" onclick="flipCard()">Don't have an account? Sign Up</div>
 </div>
@@ -163,7 +164,7 @@ color:var(--primary);
 <input type="password" id="signupPass" placeholder="Password">
 <input type="password" id="confirmPass" placeholder="Confirm Password">
 
-<button onclick="signup()">Create Account</button>
+<button type="button" onclick="signup()">Create Account</button>
 
 <div class="toggle" onclick="flipCard()">Already have an account? Login</div>
 </div>
@@ -213,10 +214,10 @@ function validateID(id){
 }
 
 /* =========================
-   LOGIN
+   DIRECT LOGIN REDIRECT
 ========================= */
 function login(){
-    const id = document.getElementById("loginId").value;
+    const id = (document.getElementById("loginId").value || "").trim();
 
     if(!validateID(id)){
         alert("College ID must be exactly 10 characters.");
@@ -224,19 +225,23 @@ function login(){
     }
 
     if(role === "student"){
-        window.location.href = "student/dashboard.html";
-    } else if(role === "faculty"){
-        window.location.href = "faculty/dashboard.html";
+        window.location.href = "student/dashboard.html?id=" + encodeURIComponent(id);
+    } 
+    else if(role === "faculty"){
+        window.location.href = "faculty/dashboard.html?id=" + encodeURIComponent(id);
+    }
+    else if(role === "admin"){
+        window.location.href = "admin/dashboard.html?id=" + encodeURIComponent(id);
     }
 }
 
 /* =========================
-   SIGNUP
+   SIMPLE SIGNUP
 ========================= */
 function signup(){
-    const id = document.getElementById("signupId").value;
-    const pass=document.getElementById("signupPass").value;
-    const confirm=document.getElementById("confirmPass").value;
+    const id = (document.getElementById("signupId").value || "").trim();
+    const pass = (document.getElementById("signupPass").value || "").trim();
+    const confirm = (document.getElementById("confirmPass").value || "").trim();
 
     if(!validateID(id)){
         alert("College ID must be exactly 10 characters.");

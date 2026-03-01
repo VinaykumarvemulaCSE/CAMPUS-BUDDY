@@ -1,112 +1,290 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Student Dashboard</title>
+<title>Student Dashboard - Campus Buddy</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-
 <style>
-:root{
---primary:#1E3A8A;
---bg:#F4F7FD;
+body{
+  font-family: Arial, sans-serif;
+  background:#f4f7fd;
+  padding:40px;
 }
-
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
-
-body{display:flex;background:var(--bg);}
-
-.sidebar{
-width:220px;
-height:100vh;
-background:var(--primary);
-color:white;
-padding:30px 20px;
-position:fixed;
-display:flex;
-flex-direction:column;
+.container{
+  max-width:700px;
+  margin:auto;
 }
-
-.sidebar h2{margin-bottom:40px;font-size:18px;}
-
-.sidebar ul{list-style:none;flex:1;}
-
-.sidebar ul li{
-padding:12px;
-margin-bottom:10px;
-border-radius:8px;
-cursor:pointer;
-transition:0.3s;
+textarea{
+  width:100%;
+  padding:10px;
+  height:80px;
+  border-radius:6px;
+  border:1px solid #ccc;
 }
-
-.sidebar ul li:hover,
-.sidebar ul li.active{
-background:rgba(255,255,255,0.2);
+button{
+  margin-top:10px;
+  padding:10px 20px;
+  background:#2563EB;
+  color:white;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
 }
-
-.main{
-margin-left:220px;
-padding:40px;
-width:100%;
-}
-
-.section{
-background:white;
-padding:30px;
-border-radius:14px;
-box-shadow:0 8px 20px rgba(0,0,0,0.06);
-max-width:900px;
+.response{
+  margin-top:20px;
+  padding:15px;
+  background:white;
+  border-radius:8px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+  white-space: pre-wrap;
 }
 </style>
 </head>
 <body>
 
-<div class="sidebar">
-<h2>🎓 Student Portal</h2>
-<ul>
-<li onclick="show('home')" class="active">Home</li>
-<li onclick="show('ask')">Ask Campus</li>
-<li onclick="show('timetable')">Timetable</li>
-<li onclick="show('reminder')">Reminder</li>
-<li onclick="logout()">Logout</li>
-</ul>
+<div class="container">
+<h2>🤖 Ask Campus Buddy</h2>
+<textarea id="question" placeholder="Ask your question..."></textarea>
+<button onclick="askQuestion()">Ask</button>
+<div class="response" id="responseBox"></div>
 </div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-<div class="main">
+const firebaseConfig = { /* your config */ };
+const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY";
 
-<div id="home" class="section">
-<h3>Welcome Student</h3>
-<p>Your academic dashboard overview.</p>
-</div>
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-<div id="ask" class="section" style="display:none;">
-<h3>Ask Campus AI</h3>
-<p>Ask academic or campus related queries.</p>
-</div>
+const studentId = new URLSearchParams(window.location.search).get("id") || "anonymous";
 
-<div id="timetable" class="section" style="display:none;">
-<h3>Your Timetable</h3>
-<p>Class schedule will appear here.</p>
-</div>
-
-<div id="reminder" class="section" style="display:none;">
-<h3>Reminders</h3>
-<p>Set academic reminders here.</p>
-</div>
-
-</div>
-
-<script>
-function show(id){
-document.querySelectorAll('.section').forEach(s=>s.style.display='none');
-document.getElementById(id).style.display='block';
-document.querySelectorAll('.sidebar ul li').forEach(li=>li.classList.remove('active'));
-event.target.classList.add('active');
+// Cosine similarity for ranking
+function cosineSimilarity(a, b) {
+  const dot = a.reduce((sum, v, i) => sum + v * b[i], 0);
+  const magA = Math.sqrt(a.reduce((sum, v) => sum + v * v, 0));
+  const magB = Math.sqrt(b.reduce((sum, v) => sum + v * v, 0));
+  return dot / (magA * magB);
 }
-function logout(){
-window.location.href="../auth.html?role=student";
-}
+
+window.askQuestion = async function() {
+  const question = document.getElementById("question").value.trim();
+  const responseBox = document.getElementById("responseBox");
+  if (!question) { alert("Enter question"); return; }
+  responseBox.innerHTML = "🔍 Searching knowledge base...";
+
+  try {
+    // 1️⃣ Get all document chunks
+    const docsSnapshot = await getDocs(collection(db, "documents"));
+    let allChunks = [];
+
+    for (const docItem of docsSnapshot.docs) {
+      const chunksSnapshot = await getDocs(collection(db, "documents", docItem.id, "chunks"));
+      chunksSnapshot.forEach(chunkDoc => {
+        const data = chunkDoc.data();
+        if(data.embedding) allChunks.push(data); // only chunks with embeddings
+      });
+    }
+
+    // 2️⃣ Generate embedding for the question
+    const embRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-embedding:embedText?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: question })
+      }
+    );
+    const embData = await embRes.json();
+    const questionEmbedding = embData.embedding?.value;
+
+    if (!questionEmbedding) throw new Error("Failed to generate embedding.");
+
+    // 3️⃣ Rank chunks by similarity
+    allChunks.forEach(c => c.similarity = cosineSimilarity(questionEmbedding, c.embedding));
+    allChunks.sort((a, b) => b.similarity - a.similarity);
+    const topChunks = allChunks.slice(0, 5);
+
+    if (topChunks.length) {
+      responseBox.innerHTML = "🤖 Found relevant info in KB. Summarizing...";
+      const context = topChunks.map(c => c.text).join("\n\n").slice(0, 2000);
+
+      // 4️⃣ Ask Gemini using top KB chunks
+      const geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: [
+              { text: `Answer the following question using the context below:\n\n${context}\n\nQuestion: ${question}` }
+            ],
+            temperature: 0.7,
+            maxOutputTokens: 512
+          })
+        }
+      );
+
+      const geminiData = await geminiRes.json();
+      const answer = geminiData.candidates?.[0]?.output_text || "No answer from AI";
+      responseBox.innerHTML = "📚 <b>Answer (from KB + AI):</b>\n\n" + answer;
+
+    } else {
+      // No KB info → ask Gemini directly & create ticket
+      responseBox.innerHTML = "🤖 No KB info. Asking AI...";
+      const geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: [{ text: question }],
+            temperature: 0.7,
+            maxOutputTokens: 512
+          })
+        }
+      );
+      const geminiData = await geminiRes.json();
+      const aiAnswer = geminiData.candidates?.[0]?.output_text || "No answer from AI";
+      responseBox.innerHTML = "🤖 <b>AI Answer:</b>\n\n" + aiAnswer;
+
+      // 5️⃣ Create a ticket in Firestore
+      await addDoc(collection(db, "tickets"), {
+        studentId,
+        question,
+        answer: aiAnswer,
+        createdAt: serverTimestamp(),
+        status: "open"
+      });
+    }
+
+  } catch (err) {
+    console.error(err);
+    responseBox.innerHTML = "❌ Error processing request.";
+  }
+};
 </script>
+<!-- <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAUg_-OfZbAbal8FVqnXAhmGhLVIiLJs8o",
+  authDomain: "campus-buddy-d7b44.firebaseapp.com",
+  projectId: "campus-buddy-d7b44",
+  storageBucket: "campus-buddy-d7b44.appspot.com",
+  messagingSenderId: "755786056822",
+  appId: "1:755786056822:web:339f72096f6d4a62a8cb57"
+};
+
+const GEMINI_API_KEY = "AIzaSyCs6Bw2ZJr128vhoJ2SMuem-l9TNxxNpX0";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const params = new URLSearchParams(window.location.search);
+const studentId = params.get("id") || "anonymous";
+
+window.askQuestion = async function() {
+  const question = document.getElementById("question").value.trim();
+  const responseBox = document.getElementById("responseBox");
+  if (!question) { alert("Enter question"); return; }
+
+  responseBox.innerHTML = "🔍 Searching knowledge base...";
+
+  try {
+    // 1️⃣ Search PDF chunks in Firestore
+    const uploadsSnapshot = await getDocs(collection(db, "pdfUploads"));
+    let kbMatches = [];
+
+    for (const fileDoc of uploadsSnapshot.docs) {
+      const chunksSnapshot = await getDocs(collection(db, "pdfUploads", fileDoc.id, "chunks"));
+      for (const chunkDoc of chunksSnapshot.docs) {
+        const text = chunkDoc.data().text.toLowerCase();
+        if (text.includes(question.toLowerCase())) {
+          kbMatches.push(chunkDoc.data().text);
+        }
+      }
+    }
+
+    if (kbMatches.length) {
+      // Summarize KB content using Gemini for better results
+      responseBox.innerHTML = "🤖 Found relevant info in Knowledge Base. Summarizing...";
+      const kbSummary = kbMatches.join("\n\n").slice(0, 2000); // Limit input tokens
+
+      try {
+        const geminiResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              prompt: [
+                { text: `Answer this question based on the following knowledge base:\n\n${kbSummary}\n\nQuestion: ${question}` }
+              ],
+              temperature: 0.7,
+              maxOutputTokens: 512
+            })
+          }
+        );
+
+        const data = await geminiResponse.json();
+        console.log("Gemini KB Summary Response:", data);
+
+        const answer = data.candidates?.[0]?.output_text || data.candidates?.[0]?.content?.[0]?.text || kbMatches[0];
+        responseBox.innerHTML = "📚 <b>Answer (from KB + AI):</b>\n\n" + answer;
+
+      } catch (e) {
+        console.error("AI summarization failed:", e);
+        responseBox.innerHTML = "📚 Answer from KB:\n\n" + kbMatches[0];
+      }
+    } else {
+      // 2️⃣ If not found in KB → Call Gemini directly
+      responseBox.innerHTML = "🤖 Not found in KB. Asking AI...";
+      let aiAnswer = "";
+
+      try {
+        const geminiResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              prompt: [{ text: question }],
+              temperature: 0.7,
+              maxOutputTokens: 512
+            })
+          }
+        );
+
+        const data = await geminiResponse.json();
+        console.log("Gemini Raw Response:", data);
+
+        aiAnswer = data.candidates?.[0]?.output_text || data.candidates?.[0]?.content?.[0]?.text || "No answer returned by AI.";
+        responseBox.innerHTML = "🤖 <b>AI Answer:</b>\n\n" + aiAnswer;
+
+      } catch (e) {
+        console.error("AI call failed:", e);
+        responseBox.innerHTML = "❌ Failed to get AI answer.";
+      }
+
+      // 3️⃣ Create ticket in Firestore only if KB had no info
+      await addDoc(collection(db, "tickets"), {
+        studentId,
+        question,
+        answer: aiAnswer || "",
+        createdAt: serverTimestamp(),
+        status: "open"
+      });
+    }
+
+  } catch (error) {
+    console.error(error);
+    responseBox.innerHTML = "❌ Error processing request.";
+  }
+};
+</script> -->
 
 </body>
 </html>

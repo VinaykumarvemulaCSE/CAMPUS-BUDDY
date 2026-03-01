@@ -113,8 +113,9 @@ body {
     line-height: 1.6;
 }
 
-/* BUTTON */
-.role-card button {
+/* BUTTON - use link so it works without JS */
+.role-card .role-btn {
+    display: inline-block;
     padding: 12px 25px;
     border: none;
     border-radius: 30px;
@@ -123,9 +124,10 @@ body {
     font-size: 14px;
     cursor: pointer;
     transition: 0.3s;
+    text-decoration: none;
 }
 
-.role-card button:hover {
+.role-card .role-btn:hover {
     background: var(--accent-red);
 }
 
@@ -179,9 +181,7 @@ body {
             View your personalized timetable, receive academic reminders,
             and interact with the AI-powered campus assistant.
         </p>
-        <button onclick="location.href='auth.html?role=student'">
-            Continue as Student
-        </button>
+        <a href="auth.html?role=student" class="role-btn">Continue as Student</a>
     </div>
 
     <!-- FACULTY CARD -->
@@ -192,14 +192,15 @@ body {
             Upload official documents, manage schedules, and oversee
             institutional academic resources securely.
         </p>
-        <button onclick="location.href='auth.html?role=faculty'">
-            Continue as Faculty
-        </button>
+        <a href="auth.html?role=faculty" class="role-btn">Continue as Faculty</a>
     </div>
 
 </div>
 
-<a href="index.html" class="back-link">← Back to Home</a>
+<div style="margin-top:30px;display:flex;gap:20px;flex-wrap:wrap;justify-content:center;">
+  <a href="index.html" class="back-link">← Back to Home</a>
+  <a href="admin/dashboard.html" class="back-link">📊 Admin Panel</a>
+</div>
 
 </body>
 </html>

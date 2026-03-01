@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Admin – Campus Buddy Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1E3A8A;
+      --accent: #DC2626;
+      --bg: #F4F7FD;
+      --success: #059669;
+      --warn: #D97706;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    .sidebar {
+      width: 240px;
+      min-height: 100vh;
+      background: var(--primary);
+      color: white;
+      padding: 24px 20px;
+      position: fixed;
+    }
+
+    .sidebar h2 {
+      font-size: 1rem;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    .sidebar ul {
+      list-style: none;
+    }
+
+    .sidebar li {
+      margin-bottom: 6px;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 10px 12px;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+    }
+
+    .sidebar a:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .sidebar a.active {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .main {
+      margin-left: 240px;
+      padding: 32px;
+      flex: 1;
+    }
+
+    .main h1 {
+      font-size: 1.5rem;
+      color: var(--primary);
+      margin-bottom: 24px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .stat-card .label {
+      font-size: 0.8rem;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-card .value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 4px;
+    }
+
+    .section {
+      background: white;
+      padding: 24px;
+      border-radius: 14px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+      margin-bottom: 24px;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .filters select {
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    th {
+      background: #f9fafb;
+      color: #374151;
+      font-weight: 600;
+    }
+
+    tr:hover {
+      background: #f9fafb;
+    }
+
+    .outcome-ticket {
+      color: var(--warn);
+      font-weight: 500;
+    }
+
+    .outcome-instant {
+      color: var(--success);
+      font-weight: 500;
+    }
+
+    .urgency-high {
+      color: var(--accent);
+    }
+
+    .btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn.resolve {
+      background: var(--success);
+    }
+
+    .empty {
+      color: #6b7280;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .ticket-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .ticket-list li {
+      padding: 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .ticket-list .meta {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .ticket-list .question {
+      font-weight: 500;
+      margin-top: 4px;
+    }
+  </style>
+  
+</head>
+
+<body>
+  <div class="sidebar">
+    <h2>📊 Admin Panel</h2>
+    <ul>
+      <li><a href="#" class="active" data-view="triage">Triage Logs</a></li>
+      <li><a href="#" data-view="tickets">Tickets</a></li>
+      <li><a href="../role.html">← Back to App</a></li>
+    </ul>
+  </div>
+
+  <div class="main">
+    <h1>Campus Buddy – Admin Dashboard</h1>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">Total Queries</div>
+        <div class="value" id="statTotal">–</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Instant Solve</div>
+        <div class="value" id="statInstant">–</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Tickets Raised</div>
+        <div class="value" id="statTickets">–</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Pending Tickets</div>
+        <div class="value" id="statPending">–</div>
+      </div>
+    </div>
+
+    <!-- Triage Logs Section -->
+    <div id="viewTriage" class="section view">
+      <h3>Triage Logs</h3>
+      <div class="filters">
+        <select id="filterOutcome">
+          <option value="">All outcomes</option>
+          <option value="instant_solve">Instant solve</option>
+          <option value="ticket_raised">Ticket raised</option>
+        </select>
+        <select id="filterDepartment">
+          <option value="">All departments</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Student</th>
+              <th>Question</th>
+              <th>Department</th>
+              <th>Intent</th>
+              <th>Urgency</th>
+              <th>Status</th>
+              <th>Outcome</th>
+            </tr>
+          </thead>
+          <tbody id="triageBody"></tbody>
+        </table>
+      </div>
+      <div id="triageEmpty" class="empty">No triage logs yet.</div>
+    </div>
+
+    <!-- Tickets Section -->
+    <div id="viewTickets" class="section view" style="display:none;">
+      <h3>Raised Tickets</h3>
+      <ul class="ticket-list" id="ticketList"></ul>
+      <div id="ticketsEmpty" class="empty">No pending tickets.</div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      onSnapshot,
+      query,
+      orderBy,
+      doc,
+      updateDoc,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAUg_-OfZbAbal8FVqnXAhmGhLVIiLJs8o",
+      authDomain: "campus-buddy-d7b44.firebaseapp.com",
+      projectId: "campus-buddy-d7b44",
+      storageBucket: "campus-buddy-d7b44.appspot.com",
+      messagingSenderId: "755786056822",
+      appId: "1:755786056822:web:339f72096f6d4a62a8cb57"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const triageBody = document.getElementById("triageBody");
+    const triageEmpty = document.getElementById("triageEmpty");
+    const ticketList = document.getElementById("ticketList");
+    const ticketsEmpty = document.getElementById("ticketsEmpty");
+    const statTotal = document.getElementById("statTotal");
+    const statInstant = document.getElementById("statInstant");
+    const statTickets = document.getElementById("statTickets");
+    const statPending = document.getElementById("statPending");
+
+    // ---------------- Real-time Triage Logs ----------------
+    const triageRef = collection(db, "triageLogs");
+    const triageQuery = query(triageRef, orderBy("createdAt", "desc"));
+
+    function renderTriageLogs(snapshot) {
+      const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const outcomeFilter = document.getElementById("filterOutcome").value;
+      const deptFilter = document.getElementById("filterDepartment").value;
+
+      // Update stats
+      statTotal.textContent = logs.length;
+      statInstant.textContent = logs.filter(l => l.outcome === "instant_solve").length;
+      statTickets.textContent = logs.filter(l => l.outcome === "ticket_raised").length;
+      statPending.textContent = logs.filter(l => l.outcome === "ticket_raised" && (!l.status || l.status === "open")).length;
+
+      // Filter logs
+      let filtered = logs;
+      if (outcomeFilter) filtered = filtered.filter(l => l.outcome === outcomeFilter);
+      if (deptFilter) filtered = filtered.filter(l => l.department === deptFilter);
+
+      // Populate table
+      triageBody.innerHTML = "";
+      if (filtered.length === 0) {
+        triageEmpty.style.display = "block";
+      } else {
+        triageEmpty.style.display = "none";
+        filtered.forEach(log => {
+          const tr = document.createElement("tr");
+          const outcomeClass = log.outcome === "instant_solve" ? "outcome-instant" : "outcome-ticket";
+          tr.innerHTML = `
+            <td>${log.createdAt ? new Date(log.createdAt.seconds * 1000).toLocaleString() : "-"}</td>
+            <td>${escapeHtml(log.studentId || "-")}</td>
+            <td title="${escapeHtml(log.question || "")}">
+              ${escapeHtml(log.question || "")}
+              ${log.botAnswer ? '<br><small style="color:var(--success)">Bot Answer Learned</small>' : ''}
+            </td>
+            <td>${escapeHtml(log.department || "-")}</td>
+            <td>${escapeHtml(log.intent || "-")}</td>
+            <td class="${(log.urgency || "").toLowerCase() === "high" ? "urgency-high" : ""}">
+              ${escapeHtml(log.urgency || "-")}
+            </td>
+            <td>${escapeHtml(log.status || "-")}</td>
+            <td class="${outcomeClass}">${log.outcome === "instant_solve" ? "Instant solve" : "Ticket raised"}</td>
+          `;
+          triageBody.appendChild(tr);
+        });
+      }
+    }
+
+    onSnapshot(triageQuery, renderTriageLogs);
+
+    document.getElementById("filterOutcome").addEventListener("change", () => {
+      onSnapshot(triageQuery, renderTriageLogs);
+    });
+    document.getElementById("filterDepartment").addEventListener("change", () => {
+      onSnapshot(triageQuery, renderTriageLogs);
+    });
+
+    // ---------------- Real-time Tickets ----------------
+    const ticketsRef = collection(db, "tickets");
+    const ticketsQuery = query(ticketsRef, orderBy("createdAt", "desc"));
+
+    onSnapshot(ticketsQuery, snapshot => {
+      const tickets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const pendingTickets = tickets.filter(t => t.status === "open");
+
+      ticketList.innerHTML = "";
+      if (pendingTickets.length === 0) {
+        ticketsEmpty.style.display = "block";
+      } else {
+        ticketsEmpty.style.display = "none";
+        pendingTickets.forEach(t => {
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <div>
+              <div class="meta">${t.studentId || "anonymous"} · ${t.department || "-"} · ${t.createdAt ? new Date(t.createdAt.seconds * 1000).toLocaleString() : ""}</div>
+              <div class="question">${escapeHtml((t.question || "").slice(0, 120))}${(t.question || "").length > 120 ? "…" : ""}</div>
+            </div>
+            <button class="btn resolve" onclick="resolveTicket('${t.id}', '${escapeHtml(t.question || "").replace(/'/g, "\\'")}')">Resolve & Teach Bot</button>
+          `;
+          ticketList.appendChild(li);
+        });
+      }
+    });
+
+    window.resolveTicket = async function(ticketId, questionText) {
+      const resolutionText = window.prompt("Provide answer for the bot to learn:");
+      if (!resolutionText) return;
+      try {
+        // Update ticket status
+        await updateDoc(doc(db, "tickets", ticketId), { status: "resolved", resolutionText });
+
+        // Update corresponding triage log
+        const triageSnapshot = await getDocs(collection(db, "triageLogs"));
+        triageSnapshot.forEach(async docSnap => {
+          const data = docSnap.data();
+          if (data.question === questionText) {
+            await updateDoc(doc(db, "triageLogs", docSnap.id), {
+              botAnswer: resolutionText,
+              outcome: "instant_solve"
+            });
+          }
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    function escapeHtml(s) {
+      const div = document.createElement("div");
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    // ---------------- Sidebar Navigation ----------------
+    function setView(view) {
+      document.querySelectorAll(".view").forEach(el => el.style.display = "none");
+      document.querySelectorAll(".sidebar a[data-view]").forEach(a => a.classList.remove("active"));
+      const v = document.getElementById("view" + view.charAt(0).toUpperCase() + view.slice(1));
+      if (v) v.style.display = "block";
+      const a = document.querySelector('.sidebar a[data-view="' + view + '"]');
+      if (a) a.classList.add("active");
+    }
+    document.querySelectorAll('.sidebar a[data-view]').forEach(a => {
+      a.addEventListener("click", e => {
+        e.preventDefault();
+        setView(a.getAttribute("data-view"));
+      });
+    });
+  </script>
+</body>
+
+</html>
