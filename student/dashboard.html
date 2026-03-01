@@ -48,124 +48,8 @@ button{
 <button onclick="askQuestion()">Ask</button>
 <div class="response" id="responseBox"></div>
 </div>
+
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = { /* your config */ };
-const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY";
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const studentId = new URLSearchParams(window.location.search).get("id") || "anonymous";
-
-// Cosine similarity for ranking
-function cosineSimilarity(a, b) {
-  const dot = a.reduce((sum, v, i) => sum + v * b[i], 0);
-  const magA = Math.sqrt(a.reduce((sum, v) => sum + v * v, 0));
-  const magB = Math.sqrt(b.reduce((sum, v) => sum + v * v, 0));
-  return dot / (magA * magB);
-}
-
-window.askQuestion = async function() {
-  const question = document.getElementById("question").value.trim();
-  const responseBox = document.getElementById("responseBox");
-  if (!question) { alert("Enter question"); return; }
-  responseBox.innerHTML = "🔍 Searching knowledge base...";
-
-  try {
-    // 1️⃣ Get all document chunks
-    const docsSnapshot = await getDocs(collection(db, "documents"));
-    let allChunks = [];
-
-    for (const docItem of docsSnapshot.docs) {
-      const chunksSnapshot = await getDocs(collection(db, "documents", docItem.id, "chunks"));
-      chunksSnapshot.forEach(chunkDoc => {
-        const data = chunkDoc.data();
-        if(data.embedding) allChunks.push(data); // only chunks with embeddings
-      });
-    }
-
-    // 2️⃣ Generate embedding for the question
-    const embRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-embedding:embedText?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: question })
-      }
-    );
-    const embData = await embRes.json();
-    const questionEmbedding = embData.embedding?.value;
-
-    if (!questionEmbedding) throw new Error("Failed to generate embedding.");
-
-    // 3️⃣ Rank chunks by similarity
-    allChunks.forEach(c => c.similarity = cosineSimilarity(questionEmbedding, c.embedding));
-    allChunks.sort((a, b) => b.similarity - a.similarity);
-    const topChunks = allChunks.slice(0, 5);
-
-    if (topChunks.length) {
-      responseBox.innerHTML = "🤖 Found relevant info in KB. Summarizing...";
-      const context = topChunks.map(c => c.text).join("\n\n").slice(0, 2000);
-
-      // 4️⃣ Ask Gemini using top KB chunks
-      const geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt: [
-              { text: `Answer the following question using the context below:\n\n${context}\n\nQuestion: ${question}` }
-            ],
-            temperature: 0.7,
-            maxOutputTokens: 512
-          })
-        }
-      );
-
-      const geminiData = await geminiRes.json();
-      const answer = geminiData.candidates?.[0]?.output_text || "No answer from AI";
-      responseBox.innerHTML = "📚 <b>Answer (from KB + AI):</b>\n\n" + answer;
-
-    } else {
-      // No KB info → ask Gemini directly & create ticket
-      responseBox.innerHTML = "🤖 No KB info. Asking AI...";
-      const geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt: [{ text: question }],
-            temperature: 0.7,
-            maxOutputTokens: 512
-          })
-        }
-      );
-      const geminiData = await geminiRes.json();
-      const aiAnswer = geminiData.candidates?.[0]?.output_text || "No answer from AI";
-      responseBox.innerHTML = "🤖 <b>AI Answer:</b>\n\n" + aiAnswer;
-
-      // 5️⃣ Create a ticket in Firestore
-      await addDoc(collection(db, "tickets"), {
-        studentId,
-        question,
-        answer: aiAnswer,
-        createdAt: serverTimestamp(),
-        status: "open"
-      });
-    }
-
-  } catch (err) {
-    console.error(err);
-    responseBox.innerHTML = "❌ Error processing request.";
-  }
-};
-</script>
-<!-- <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -284,7 +168,7 @@ window.askQuestion = async function() {
     responseBox.innerHTML = "❌ Error processing request.";
   }
 };
-</script> -->
+</script>
 
 </body>
 </html>
